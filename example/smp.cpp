@@ -67,10 +67,16 @@ int main(int argc, char* argv[])
     assert(y.x.f == 72.68f);
     assert(y.x.s == "Programs");
 
+    x.*smp::get<0, X>() = 48.65f;
+    x.*smp::get<1, X>() = "transformer";
+
+    assert(smp::get<1>(f) == "transformer");
+    assert(smp::get<float>(f) == 48.65f);
+
     y.*smp::get<3, Y>() = { 25.65f, "Template" };
 
-    assert((std::get<3>(t).f == 25.65f));
-    assert((std::get<X&>(t).s == "Template"));
+    assert(std::get<3>(t).f == 25.65f);
+    assert(std::get<X&>(t).s == "Template");
 
     W w1;
     W w2;

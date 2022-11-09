@@ -1,4 +1,4 @@
-# Smp [![LICENSE](https://img.shields.io/github/license/deepgrace/smp.svg)](https://github.com/deepgrace/smp/blob/master/LICENSE_1_0.txt) [![Language](https://img.shields.io/badge/language-C%2B%2B23-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support) [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20MacOS%20%7C%20Windows-lightgrey.svg)](https://github.com/deepgrace/smp)
+# smp [![LICENSE](https://img.shields.io/github/license/deepgrace/smp.svg)](https://github.com/deepgrace/smp/blob/master/LICENSE_1_0.txt) [![Language](https://img.shields.io/badge/language-C%2B%2B23-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support) [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20MacOS%20%7C%20Windows-lightgrey.svg)](https://github.com/deepgrace/smp)
 
 > **Advanced C++ Stateful Template MetaProgramming Library**
 
@@ -62,10 +62,16 @@ int main(int argc, char* argv[])
     assert(y.x.f == 72.68f);
     assert(y.x.s == "Programs");
 
+    x.*smp::get<0, X>() = 48.65f;
+    x.*smp::get<1, X>() = "transformer";
+
+    assert(smp::get<1>(f) == "transformer");
+    assert(smp::get<float>(f) == 48.65f);
+
     y.*smp::get<3, Y>() = { 25.65f, "Template" };
 
-    assert((std::get<3>(t).f == 25.65f));
-    assert((std::get<X&>(t).s == "Template"));
+    assert(std::get<3>(t).f == 25.65f);
+    assert(std::get<X&>(t).s == "Template");
 
     W w1;
     W w2;
@@ -200,10 +206,10 @@ int main(int argc, char* argv[])
 ```
 
 ## Introduction
-Smp is a stateful metaprogramming library, which is header-only, extensible and modern C++ oriented.  
+smp is a stateful metaprogramming library, which is header-only, extensible and modern C++ oriented.  
 It exhibits a form of stateful metaprogramming of compile time type list, index sequence generator and provides many powerful algorithms for manipulating structure elements.
 
-Smp is mainly consist of three parts:
+smp is mainly consist of three parts:
 - **fuple**   A flat tuple implemented with multiple inheritance is a drop-in replacement for std::tuple
 - **indexer** A compile time type list and index sequence generator with queryable type states embeded in it 
 - **reflect** A reflection library enable you to manipulate structure elements by index or type and provides many std::tuple like methods
@@ -211,13 +217,13 @@ Smp is mainly consist of three parts:
 ## Compiler requirements
 The library relies on a C++23 compiler and standard library, but nothing else is required.
 
-More specifically, Smp requires a compiler/standard library supporting the following C++23 features (non-exhaustively):
+More specifically, smp requires a compiler/standard library supporting the following C++23 features (non-exhaustively):
 - concepts
 - lambda templates
 - All the C++23 type traits from the <type_traits> header
 
 ## Building
-Smp is header-only. To use it just add the necessary `#include` line to your source files, like this:
+smp is header-only. To use it just add the necessary `#include` line to your source files, like this:
 ```cpp
 #include <smp.hpp>
 ```
@@ -241,4 +247,4 @@ The example can also be built with the script `build.sh`, just run it, the execu
 Please see [example](example).
 
 ## License
-Smp is licensed as [Boost Software License 1.0](LICENSE_1_0.txt).
+smp is licensed as [Boost Software License 1.0](LICENSE_1_0.txt).
