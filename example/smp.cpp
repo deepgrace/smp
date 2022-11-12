@@ -178,6 +178,23 @@ int main(int argc, char* argv[])
     smp::for_each(print_backward, w2);
     std::cout << std::endl;
 
+    auto mptrs_backward = []<typename T>(T&& t)
+    {
+        return [&]<typename... Args>(Args&&... args)
+        {
+            const char* sep = " ";
+
+            ((std::cout << t.*args << sep, sep) = ... = " ");
+            std::cout << std::endl;
+        };
+    };
+
+    smp::for_mptr(mptrs_backward(w1), w1);
+    std::cout << std::endl;
+
+    smp::for_mptr(mptrs_backward(w2), w2);
+    std::cout << std::endl;
+
     smp::apply(print_backward, w1);
     smp::apply(print_backward, w2);
 

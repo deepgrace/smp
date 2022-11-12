@@ -195,14 +195,14 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr decltype(auto) for_each(F&& f, T&& t)
     {
-        return  smp::for_each(std::forward<F>(f), tie_fuple(std::forward<T>(t))); 
+        return  smp::for_each(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
     }
 
     template <typename F, typename T>
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr decltype(auto) apply(F&& f, T&& t)
     {
-        return  smp::apply(std::forward<F>(f), tie_fuple(std::forward<T>(t))); 
+        return  smp::apply(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
     }
 
     template <bool B, template <typename ...> typename T, typename... Args>
@@ -267,6 +267,13 @@ namespace smp
         }
         (std::make_index_sequence<fuple_size_v<U>>());
     }.template operator()<members_t<T>>();
+
+    template <typename F, typename T>
+    requires (!is_fuple_v<std::remove_cvref_t<T>>)
+    constexpr decltype(auto) for_mptr(F&& f, T&& t)
+    {
+        return  smp::for_each(std::forward<F>(f), member_pointers_v<std::remove_cvref_t<T>>);
+    }
 
     template <typename R, typename T>
     constexpr size_t index(R T::* m)
@@ -539,7 +546,7 @@ namespace smp
     };
 
     template <typename T>
-    inline constexpr size_t tuple_size_v = tuple_size<T>::value; 
+    inline constexpr size_t tuple_size_v = tuple_size<T>::value;
 
     template <size_t N, typename T>
     struct tuple_element : member<N, T>

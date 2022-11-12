@@ -226,7 +226,7 @@ namespace smp
     };
 
     template <typename T>
-    inline constexpr size_t fuple_size_v = fuple_size<T>::value; 
+    inline constexpr size_t fuple_size_v = fuple_size<T>::value;
 
     template <typename T>
     inline constexpr size_t length_v = fuple_size_v<std::remove_cvref_t<T>>;

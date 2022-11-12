@@ -1,4 +1,4 @@
-# smp [![LICENSE](https://img.shields.io/github/license/deepgrace/smp.svg)](https://github.com/deepgrace/smp/blob/master/LICENSE_1_0.txt) [![Language](https://img.shields.io/badge/language-C%2B%2B23-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support) [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20MacOS%20%7C%20Windows-lightgrey.svg)](https://github.com/deepgrace/smp)
+# smp [![LICENSE](https://img.shields.io/github/license/deepgrace/smp.svg)](https://github.com/deepgrace/smp/blob/master/LICENSE_1_0.txt) [![Language](https://img.shields.io/badge/language-C%2B%2B20-blue.svg)](https://en.cppreference.com/w/cpp/compiler_support) [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20MacOS%20%7C%20Windows-lightgrey.svg)](https://github.com/deepgrace/smp)
 
 > **Advanced C++ Stateful Template MetaProgramming Library**
 
@@ -173,6 +173,23 @@ int main(int argc, char* argv[])
     smp::for_each(print_backward, w2);
     std::cout << std::endl;
 
+    auto mptrs_backward = []<typename T>(T&& t)
+    {
+        return [&]<typename... Args>(Args&&... args)
+        {
+            const char* sep = " ";
+
+            ((std::cout << t.*args << sep, sep) = ... = " ");
+            std::cout << std::endl;
+        };
+    };
+
+    smp::for_mptr(mptrs_backward(w1), w1);
+    std::cout << std::endl;
+
+    smp::for_mptr(mptrs_backward(w2), w2);
+    std::cout << std::endl;
+
     smp::apply(print_backward, w1);
     smp::apply(print_backward, w2);
 
@@ -215,12 +232,12 @@ smp is mainly consist of three parts:
 - **reflect** A reflection library enable you to manipulate structure elements by index or type and provides many std::tuple like methods
 
 ## Compiler requirements
-The library relies on a C++23 compiler and standard library, but nothing else is required.
+The library relies on a C++20 compiler and standard library, but nothing else is required.
 
-More specifically, smp requires a compiler/standard library supporting the following C++23 features (non-exhaustively):
+More specifically, smp requires a compiler/standard library supporting the following C++20 features (non-exhaustively):
 - concepts
 - lambda templates
-- All the C++23 type traits from the <type_traits> header
+- All the C++20 type traits from the <type_traits> header
 
 ## Building
 smp is header-only. To use it just add the necessary `#include` line to your source files, like this:

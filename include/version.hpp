@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-present DeepGrace (complex dot invoke at gmail dot com)
+// Copyright (c) 2022-present DeepGrace (complex dot invoke at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -15,12 +15,12 @@
 /*
  *   SMP_VERSION_NUMBER
  *
- *   Identifies the API version of Smp.
+ *   Identifies the API version of smp.
  *   This is a simple integer that is incremented by one every
  *   time a set of code changes is merged to the master branch.
  */
 
-#define SMP_VERSION_NUMBER 1
-#define SMP_VERSION_STRING "Smp/" SMP_STRINGIZE(SMP_VERSION)
+#define SMP_VERSION_NUMBER 2
+#define SMP_VERSION_STRING "smp/" SMP_STRINGIZE(SMP_VERSION)
 
 #endif
