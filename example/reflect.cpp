@@ -133,6 +133,29 @@ int main(int argc, char* argv[])
     auto f = smp::to_fuple(x);
     auto t = smp::to_tuple(y);
 
+    // fill a structure from a fuple or tuple
+
+    Y y0;
+
+    auto x0 = smp::fill<X>(f);
+    smp::fill(y0, t);
+
+    assert(x.f == x0.f);
+    assert(x.s == x0.s);
+
+    assert(y.i == y0.i);
+    assert(y.d == y0.d);
+
+    // fill a structure from a pack
+
+    Y y1;
+
+    auto x1 = smp::fill<X>(12.98f, std::string("filled from args"));
+    smp::fill(y1, 2987, 20.21, '_', X{ 18.21f, std::string("Variadic") });
+
+    assert(x1.f == 12.98f);
+    assert(y1.x.s == "Variadic");
+
     smp::get<0>(f) = 25.67f;
     std::get<1>(t) = 70.71;
 
@@ -146,6 +169,19 @@ int main(int argc, char* argv[])
 
     auto rf = smp::tie_fuple(x);
     auto rt = smp::tie_tuple(y);
+
+    // fill a structure from a fuple or tuple
+
+    X x2;
+
+    smp::fill(x2, rf);
+    auto y2 = smp::fill<Y>(rt);
+
+    assert(x.f == x2.f);
+    assert(x.s == x2.s);
+
+    assert(y.i == y2.i);
+    assert(y.d == y2.d);
 
     smp::get<1>(rf) = "TMP";
     std::get<3>(rt) = { 87.45f, "Black Magic" };

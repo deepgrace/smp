@@ -367,6 +367,43 @@ namespace smp
     }
 
     template <typename T, typename U>
+    requires (!is_fuple_v<std::remove_cvref_t<T>> && is_fuple_v<std::remove_cvref_t<U>>)
+    constexpr decltype(auto) fill(T&& t, U&& u)
+    {
+        tie_fuple(std::forward<T>(t)) = std::forward<U>(u);
+
+        return std::forward<T>(t);
+    }
+
+    template <typename T, typename U>
+    requires (!is_fuple_v<std::remove_cvref_t<T>> && is_tuple_v<std::remove_cvref_t<U>>)
+    constexpr decltype(auto) fill(T&& t, U&& u)
+    {
+        tie_tuple(std::forward<T>(t)) = std::forward<U>(u);
+
+        return std::forward<T>(t);
+    }
+
+    template <typename T, typename... Args>
+    requires (!is_fuple_v<std::remove_cvref_t<T>>)
+    constexpr decltype(auto) fill(T&& t, Args&&... args)
+    {
+        tie_fuple(std::forward<T>(t)) = forward_as_fuple(std::forward<Args>(args)...);
+
+        return std::forward<T>(t);
+    }
+
+    template <typename T, typename... Args>
+    requires (!is_fuple_v<std::remove_cvref_t<T>>)
+    constexpr decltype(auto) fill(Args&&... args)
+    {
+        T t;
+        fill(t, std::forward<Args>(args)...);
+
+        return t;
+    }
+
+    template <typename T, typename U>
     requires (!is_fuple_v<std::remove_cvref_t<T>> && !is_fuple_v<std::remove_cvref_t<U>>)
     constexpr bool lt(T&& t, U&& u)
     {
