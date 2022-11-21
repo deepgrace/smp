@@ -129,5 +129,16 @@ int main(int argc, char* argv[])
     std::cout << "f12 >= f13 " << (f12 >= f13) << std::endl;
     std::cout << "f12 >  f13 " << (f12 >  f13) << std::endl;
 
+    // convert a fuple to a tuple or vice versa
+
+    auto mf = smp::make_fuple(9, 's');
+    auto mt = std::make_tuple(9, 's');
+
+    auto ft = smp::fuple_to_tuple(mf);
+    auto tf = smp::tuple_to_fuple(mt);
+
+    assert(mf == tf);
+    assert(mt == ft);
+
     return 0;
 }

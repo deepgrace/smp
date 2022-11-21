@@ -427,6 +427,26 @@ namespace smp
         return std::forward<U>(u) < std::forward<T>(t);
     }
 
+    template <typename T>
+    requires is_fuple_v<std::remove_cvref_t<T>>
+    constexpr decltype(auto) fuple_to_tuple(T&& t)
+    {
+        return smp::apply([]<typename... Args>(Args&&... args)
+        {
+            return std::make_tuple(std::forward<Args>(args)...);
+        }, std::forward<T>(t));
+    }
+
+    template <typename T>
+    requires is_tuple_v<std::remove_cvref_t<T>>
+    constexpr decltype(auto) tuple_to_fuple(T&& t)
+    {
+        return std::apply([]<typename... Args>(Args&&... args)
+        {
+            return smp::make_fuple(std::forward<Args>(args)...);
+        }, std::forward<T>(t));
+    }
+
     template <typename T, typename U = std::byte>
     struct aligned_storage
     {

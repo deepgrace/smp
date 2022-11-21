@@ -305,7 +305,7 @@ namespace smp
     template <typename T>
     constexpr decltype(auto) quoted(T&& t)
     {
-        if constexpr(requires(){ typename std::remove_cvref_t<T>::traits_type; })
+        if constexpr(requires{ typename std::remove_cvref_t<T>::traits_type; })
             return std::quoted(std::forward<T>(t));
         else
             return std::forward<T>(t);
@@ -341,7 +341,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr S& operator<<(S& s, io_t<T>&& t)
     {
-        if constexpr(requires(){ std::declval<S>() << std::declval<T>(); })
+        if constexpr(requires{ std::declval<S>() << std::declval<T>(); })
             return s << std::forward<T>(t.value);
         else 
         {
@@ -355,7 +355,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr S& operator>>(S& s, io_t<T>&& t)
     {
-        if constexpr(requires(){ std::declval<S>() >> std::declval<T>(); })
+        if constexpr(requires{ std::declval<S>() >> std::declval<T>(); })
             return s >> std::forward<T>(t.value);
         else 
         {
@@ -407,7 +407,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>> && !is_fuple_v<std::remove_cvref_t<U>>)
     constexpr bool lt(T&& t, U&& u)
     {
-        if constexpr(requires(){ t < u; })
+        if constexpr(requires{ t < u; })
             return std::forward<T>(t) < std::forward<U>(u);
         else
             return tie_fuple(std::forward<T>(t)) < tie_fuple(std::forward<U>(u));
@@ -417,7 +417,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>> && !is_fuple_v<std::remove_cvref_t<U>>)
     constexpr bool ne(T&& t, U&& u)
     {
-        if constexpr(requires(){ t != u; })
+        if constexpr(requires{ t != u; })
             return std::forward<T>(t) != std::forward<U>(u);
         else
             return tie_fuple(std::forward<T>(t)) != tie_fuple(std::forward<U>(u));
