@@ -201,6 +201,84 @@ int main(int argc, char* argv[])
     std::cout << std::endl;
     smp::zip(print_backward, w1, w2, x, y);
 
+    // marshal and unmarshal a structure
+
+    std::string xs = smp::marshal(x);
+    std::string ys = smp::marshal(y);
+
+    X x0 = smp::unmarshal<X>(xs);
+    Y y0 = smp::unmarshal<Y>(ys);
+
+    assert(smp::eq(x, x0));
+
+    assert(y.i == y0.i);
+    assert(y.d == y0.d);
+
+    assert(y.c == y0.c);
+    assert(smp::eq(y.x, y0.x));
+
+    // marshal and unmarshal with allocated structure
+
+    X x1;
+    std::string s0;
+
+    smp::marshal(s0, x);
+    smp::unmarshal(s0, x1);
+
+    assert(smp::eq(x1, x));
+
+    Y y1;
+    std::string s1 = "prefix";
+
+    size_t prelen = s1.length();
+    size_t length = s1.length();
+
+    smp::marshal(s1, y);
+    smp::unmarshal(length, s1, y1);
+
+    assert(y.i == y1.i);
+    assert(y.d == y1.d);
+
+    assert(y.c == y1.c);
+    assert(smp::eq(y.x, y1.x));
+
+    assert(length == s1.length());
+    assert(smp::marshal(y).length() == length - prelen);
+
+    auto y2 = smp::unmarshal<Y>(s1.substr(prelen));
+
+    assert(y.i == y2.i);
+    assert(y.d == y2.d);
+
+    assert(y.c == y2.c);
+    assert(smp::eq(y.x, y2.x));
+
+    // marshal and unmarshal a smp::fuple or std::tuple
+
+    std::string ws1 = smp::marshal(f1);
+    std::string ws2 = smp::marshal(t2);
+
+    auto w3 = smp::unmarshal<W>(ws1);
+    auto w4 = smp::unmarshal<W>(ws2);
+
+    assert(smp::eq(w1, w3));
+    assert(smp::eq(w2, w4));
+
+    auto f0 = smp::make_fuple(1, 2.0f, std::string("marshal"), 'X', std::make_tuple(100.3, std::string("Unmarshal")));
+    auto t0 = std::make_tuple(2, 3.0f, std::string("Marshal"), 'Y', smp::make_fuple(200.3, std::string("unmarshal")));
+
+    std::string fs0 = smp::marshal(f0);
+    std::string ts0 = smp::marshal(t0);
+
+    auto f3 = smp::unmarshal<decltype(f0)>(fs0);
+    auto t3 = smp::unmarshal<decltype(t0)>(ts0);
+
+    assert(f3 == f0);
+    assert(t3 == t0);
+
+    assert(std::get<std::string>(smp::get<4>(f3)) == std::get<1>(smp::get<4>(f0)));
+    assert(smp::get<1>(std::get<4>(t3)) == smp::get<std::string>(std::get<4>(t0)));
+
     // indexer part
 
     static_assert(smp::next<>() == 0);

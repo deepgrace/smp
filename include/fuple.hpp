@@ -337,12 +337,15 @@ namespace smp
     }
 
     template <typename F, typename T>
-    requires is_fuple_v<std::remove_cvref_t<T>>
+    requires (is_fuple_v<std::remove_cvref_t<T>> || is_tuple_v<std::remove_cvref_t<T>>)
     constexpr decltype(auto) for_each(F&& f, T&& t)
     {
         return [&]<size_t... N>(std::index_sequence<N...>)
         {
-            (..., std::invoke(std::forward<F>(f), get<N>(std::forward<T>(t))));
+            if constexpr(is_fuple_v<std::remove_cvref_t<T>>)
+                (..., std::invoke(std::forward<F>(f), smp::get<N>(std::forward<T>(t))));
+            else
+                (..., std::invoke(std::forward<F>(f), std::get<N>(std::forward<T>(t))));
 
             return std::forward<F>(f);
         }
@@ -427,24 +430,58 @@ namespace smp
         return std::forward<U>(u) < std::forward<T>(t);
     }
 
+    template <bool f, bool t, typename U>
+    requires (is_fuple_v<std::remove_cvref_t<U>> || is_tuple_v<std::remove_cvref_t<U>>)
+    static constexpr decltype(auto) expand(U&& u)
+    {
+        if constexpr(f)
+        {
+            return smp::apply([]<typename... Args>(Args&&... args)
+            {
+                if constexpr(t)
+                    return smp::tie(std::forward<Args>(args)...);
+                else
+                    return std::make_tuple(std::forward<Args>(args)...);
+            }, std::forward<U>(u));
+        }
+        else
+        {
+            return std::apply([]<typename... Args>(Args&&... args)
+            {
+                if constexpr(t)
+                    return std::tie(std::forward<Args>(args)...);
+                else
+                    return smp::make_fuple(std::forward<Args>(args)...);
+            }, std::forward<U>(u));
+        }
+    }
+
     template <typename T>
     requires is_fuple_v<std::remove_cvref_t<T>>
     constexpr decltype(auto) fuple_to_tuple(T&& t)
     {
-        return smp::apply([]<typename... Args>(Args&&... args)
-        {
-            return std::make_tuple(std::forward<Args>(args)...);
-        }, std::forward<T>(t));
+        return expand<1, 0>(std::forward<T>(t));
     }
 
     template <typename T>
     requires is_tuple_v<std::remove_cvref_t<T>>
     constexpr decltype(auto) tuple_to_fuple(T&& t)
     {
-        return std::apply([]<typename... Args>(Args&&... args)
-        {
-            return smp::make_fuple(std::forward<Args>(args)...);
-        }, std::forward<T>(t));
+        return expand<0, 0>(std::forward<T>(t));
+    }
+
+    template <typename T>
+    requires is_fuple_v<std::remove_cvref_t<T>>
+    constexpr decltype(auto) tied_fuple(T&& t)
+    {
+        return expand<1, 1>(std::forward<T>(t));
+    }
+
+    template <typename T>
+    requires is_tuple_v<std::remove_cvref_t<T>>
+    constexpr decltype(auto) tied_tuple(T&& t)
+    {
+        return expand<0, 1>(std::forward<T>(t));
     }
 
     template <typename T, typename U = std::byte>

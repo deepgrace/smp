@@ -140,5 +140,19 @@ int main(int argc, char* argv[])
     assert(mf == tf);
     assert(mt == ft);
 
+    // create a smp::fuple or std::tuple of lvalue references from another smp::fuple or std::tuple
+    // i.e
+    // smp::fuple<Args...> -> smp::fuple<Args&...>
+    // std::tuple<Args...> -> std::tuple<Args&...>
+
+    auto x = smp::tied_fuple(tf);
+    auto y = smp::tied_tuple(ft);
+
+    smp::get<0>(x) = 100;
+    std::get<1>(y) = 'S';
+
+    assert(smp::get<0>(tf) == 100);
+    assert(std::get<1>(ft) == 'S');
+
     return 0;
 }

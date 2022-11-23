@@ -10,6 +10,7 @@
 #ifndef REFLECT_HPP
 #define REFLECT_HPP
 
+#include <cstring>
 #include <iomanip>
 #include <visitor.hpp>
 
@@ -122,7 +123,7 @@ namespace smp
     using member_pointers_t = typename member_pointers<T>::type;
 
     template <bool f, bool t, typename U>
-    requires (!is_fuple_v<std::remove_cvref_t<U>>)
+    requires (!is_fuple_v<std::remove_cvref_t<U>> && !is_tuple_v<std::remove_cvref_t<U>>)
     static constexpr decltype(auto) expand(U&& u)
     {
         return visitor<members_t<std::remove_cvref_t<U>>>().template get<f, t>(std::forward<U>(u));
@@ -192,17 +193,116 @@ namespace smp
     }
 
     template <typename F, typename T>
-    requires (!is_fuple_v<std::remove_cvref_t<T>>)
+    requires (!is_fuple_v<std::remove_cvref_t<T>> && !is_tuple_v<std::remove_cvref_t<T>>)
     constexpr decltype(auto) for_each(F&& f, T&& t)
     {
-        return  smp::for_each(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
+        return smp::for_each(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
     }
 
     template <typename F, typename T>
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr decltype(auto) apply(F&& f, T&& t)
     {
-        return  smp::apply(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
+        return smp::apply(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
+    }
+
+    template <bool B, typename T, typename L, typename S, typename U>
+    constexpr decltype(auto) copy(L&& l, S&& s, U&& u, size_t size = sizeof(T))
+    {
+        if constexpr(B)
+            s.resize(l + size);
+
+        auto dst = s.data() + l;
+        auto src = std::addressof(std::forward<U>(u));
+
+        if constexpr(!B)
+            std::memcpy(src, dst, size);
+        else
+            std::memcpy(dst, src, size);
+
+        return size;
+    }
+
+    template <bool B, typename L, typename S, typename T>
+    constexpr decltype(auto) assign(L&& l, S&& s, T&& t)
+    {
+        for_each([&]<typename U>(U&& u)
+        {
+            if constexpr(B)
+                l = s.length();
+
+            using type = std::remove_cvref_t<U>;
+
+            if constexpr(std::is_fundamental_v<type>)
+                l += copy<B, type>(l, s, std::forward<U>(u));
+            else if constexpr(std::is_same_v<type, std::string>)
+            {
+                auto size = B * u.size();
+                l += copy<B, size_t>(l, s, size);
+
+                if constexpr(B)
+                    s.append(std::forward<U>(u));
+                else
+                {
+                    u.resize(size);
+                    l += copy<B, size_t>(l, s, u[0], size);
+                }
+            }
+            else if constexpr(std::is_class_v<type>)
+                assign<B>(std::forward<L>(l), std::forward<S>(s), std::forward<U>(u));
+        }, std::forward<T>(t));
+
+        if constexpr(B)
+            return std::forward<S>(s);
+        else
+            return std::forward<T>(t);
+    }
+
+    template <typename T>
+    constexpr decltype(auto) marshal(std::string& s, T&& t)
+    {
+        return assign<1>(0, s, std::forward<T>(t));
+    }
+
+    template <typename T>
+    constexpr decltype(auto) marshal(T&& t)
+    {
+        std::string s;
+        marshal(s, std::forward<T>(t));
+
+        return s;
+    }
+
+    template <typename T>
+    constexpr decltype(auto) marshal()
+    {
+        T t;
+
+        return marshal(t);
+    }
+
+    template <typename T>
+    constexpr decltype(auto) unmarshal(size_t& l, const std::string& s, T&& t)
+    {
+        return assign<0>(l, s, std::forward<T>(t));
+    }
+
+    template <typename T>
+    constexpr decltype(auto) unmarshal(const std::string& s, T&& t)
+    {
+        size_t l = 0;
+        unmarshal(l, s, std::forward<T>(t));
+
+        return std::forward<T>(t);
+    }
+
+    template <typename T>
+    constexpr decltype(auto) unmarshal(const std::string& s)
+    {
+        T t;
+        unmarshal(s, t);
+
+        return t;
     }
 
     template <bool B, template <typename ...> typename T, typename... Args>
@@ -272,7 +372,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr decltype(auto) for_mptr(F&& f, T&& t)
     {
-        return  smp::for_each(std::forward<F>(f), member_pointers_v<std::remove_cvref_t<T>>);
+        return smp::for_each(std::forward<F>(f), member_pointers_v<std::remove_cvref_t<T>>);
     }
 
     template <typename R, typename T>

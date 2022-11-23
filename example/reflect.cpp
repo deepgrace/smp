@@ -191,6 +191,61 @@ int main(int argc, char* argv[])
     assert(y.x.f == 87.45f);
     assert(y.x.s == "Black Magic");
 
+    // marshal and unmarshal a structure
+
+    std::string ys = smp::marshal(y);
+
+    // or
+    // auto ys = smp::marshal(smp::tie_fuple(y));
+    // auto ys = smp::marshal(smp::tie_tuple(y));
+
+    Y yf = smp::unmarshal<Y>(ys);
+
+    // or
+    // auto yf = smp::unmarshal<Y>(ys);
+
+    assert(yf.i == y.i);
+    assert(yf.d == y.d);
+
+    assert(yf.c == y.c);
+    assert(yf.x.f == y.x.f);
+
+    assert(yf.x.s == y.x.s);
+
+    // marshal and unmarshal a smp::fuple or std::tuple
+
+    auto mf = smp::make_fuple(1, 2.0f, std::string("marshal"), 'X', smp::make_fuple(100.3, std::string("Unmarshal")));
+    auto mt = std::make_tuple(2, 3.0f, std::string("Marshal"), 'Y', std::make_tuple(200.3, std::string("unmarshal")));
+
+    std::string fs = smp::marshal(mf);
+    std::string ts = smp::marshal(mt);
+
+    auto fu = smp::unmarshal<decltype(mf)>(fs);
+    auto tu = smp::unmarshal<decltype(mt)>(ts);
+
+    assert(fu == mf);
+    assert(tu == mt);
+
+    assert(smp::get<std::string>(smp::get<4>(fu)) == smp::get<1>(smp::get<4>(mf)));
+    assert(std::get<1>(std::get<4>(tu)) == std::get<std::string>(std::get<4>(mt)));
+
+    // marshal and unmarshal a smp::fuple or std::tuple that mixed together
+
+    auto mf0 = smp::make_fuple(1, 2.0f, std::string("marshal"), 'X', std::make_tuple(100.3, std::string("Unmarshal")));
+    auto mt0 = std::make_tuple(2, 3.0f, std::string("Marshal"), 'Y', smp::make_fuple(200.3, std::string("unmarshal")));
+
+    auto fs0 = smp::marshal(mf0);
+    auto ts0 = smp::marshal(mt0);
+
+    auto fu0 = smp::unmarshal<decltype(mf0)>(fs0);
+    auto tu0 = smp::unmarshal<decltype(mt0)>(ts0);
+
+    assert(fu0 == mf0);
+    assert(tu0 == mt0);
+
+    assert(std::get<std::string>(smp::get<4>(fu0)) == std::get<1>(smp::get<4>(mf0)));
+    assert(smp::get<1>(std::get<4>(tu0)) == smp::get<std::string>(std::get<4>(mt0)));
+
     // stream operators
 
     W w1;
