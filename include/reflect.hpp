@@ -62,11 +62,13 @@ namespace smp
     template <typename T>
     inline constexpr auto arity_v = arity<T>();
 
+    template <size_t N, typename T, auto = 0>
+    using type_t = decltype(adl_r(dec_r<N, std::remove_cvref_t<T>>()));
+
     template <size_t N, typename T>
     struct member
     {
-        static constexpr size_t value = arity_v<std::remove_cvref_t<T>>;
-        using type = decltype(adl_r(dec_r<N, std::remove_cvref_t<T>>()));
+        using type = type_t<N, T, arity_v<std::remove_cvref_t<T>>>;
     };
 
     template <size_t N, typename T>
@@ -99,7 +101,7 @@ namespace smp
 
         using type = decltype([]<size_t... N>(std::index_sequence<N...>)
         {
-            return fuple<decltype(adl_r(dec_r<N, U>()))...>();
+            return fuple<type_t<N, U>...>();
         }
         (std::make_index_sequence<arity_v<U>>()));
     };
@@ -114,7 +116,7 @@ namespace smp
 
         using type = decltype([]<size_t... N>(std::index_sequence<N...>)
         {
-            return fuple<decltype(adl_r(dec_r<N, U>())) U::*...>();
+            return fuple<type_t<N, U> U::*...>();
         }
         (std::make_index_sequence<arity_v<U>>()));
     };
@@ -215,10 +217,10 @@ namespace smp
         auto dst = s.data() + l;
         auto src = std::addressof(std::forward<U>(u));
 
-        if constexpr(!B)
-            std::memcpy(src, dst, size);
-        else
+        if constexpr(B)
             std::memcpy(dst, src, size);
+        else
+            std::memcpy(src, dst, size);
 
         return size;
     }
@@ -405,7 +407,7 @@ namespace smp
     template <typename T>
     constexpr decltype(auto) quoted(T&& t)
     {
-        if constexpr(requires{ typename std::remove_cvref_t<T>::traits_type; })
+        if constexpr(requires { typename std::remove_cvref_t<T>::traits_type; })
             return std::quoted(std::forward<T>(t));
         else
             return std::forward<T>(t);
@@ -441,7 +443,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr S& operator<<(S& s, io_t<T>&& t)
     {
-        if constexpr(requires{ std::declval<S>() << std::declval<T>(); })
+        if constexpr(requires { std::declval<S>() << std::declval<T>(); })
             return s << std::forward<T>(t.value);
         else 
         {
