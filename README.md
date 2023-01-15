@@ -307,7 +307,7 @@ It exhibits a form of stateful metaprogramming of compile time type list, index 
 smp is mainly consist of three parts:
 - **fuple**   A flat tuple implemented with multiple inheritance is a drop-in replacement for std::tuple
 - **indexer** A compile time type list and index sequence generator with queryable type states embeded in it 
-- **reflect** A reflection library enable you to manipulate structure elements by index or type and provides many std::tuple like methods
+- **reflect** A reflection, marshaling and unmarshaling library enable you to manipulate structure elements by index or type and provides many std::tuple like methods
 
 ## Compiler requirements
 The library relies on a C++20 compiler and standard library, but nothing else is required.

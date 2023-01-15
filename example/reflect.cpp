@@ -9,13 +9,22 @@
 
 // g++ -I include -m64 -std=c++23 -s -Wall -O3 -o /tmp/reflect example/reflect.cpp
 
+#include <map>
+#include <set>
+#include <list>
+#include <array>
+#include <deque>
+#include <vector>
 #include <cassert>
 #include <iostream>
+#include <forward_list>
+#include <unordered_map>
+#include <unordered_set>
 #include <reflect.hpp>
 
-// A reflection library enable you to manipulate structure (aggregate initializable without empty base classes,
-// const fields, references, or C arrays) elements by index or type and provides other std::tuple like methods
-// for user defined types in a non-intrusive manner without any macro or boilerplate code
+// A reflection, marshaling and unmarshaling library enable you to manipulate structure (aggregate initializable
+// without empty base classes, const fields, references, or C arrays) elements by index or type and provides other
+// std::tuple like methods for user defined types in a non-intrusive manner without any macro or boilerplate code
 
 struct W
 {
@@ -36,6 +45,33 @@ struct Y
     double d;
     char c;
     X x;
+};
+
+// smp can reflect, marshal and unmarshal a structure with fundamental types, UDTS and all STL containers as its members
+// see line 491 and line 527
+
+struct Z
+{
+    int i;
+    double d;
+    char c;
+    X x;
+    X* ptr;
+    std::string s;
+    std::list<int> ages;
+    std::deque<std::string> names;
+    std::vector<X> xs;
+    std::forward_list<std::vector<int>> ints;
+    std::shared_ptr<X> sp;
+    std::array<X, 3> arrs;
+    std::set<int> sets;
+    std::map<int, std::string> maps;
+    std::multiset<int> multisets;
+    std::multimap<int, std::string> multimaps;
+    std::unordered_set<int> unordered_sets;
+    std::unordered_map<int, std::string> unordered_maps;
+    std::unordered_multiset<int> unordered_multisets;
+    std::unordered_multimap<int, std::string> unordered_multimaps;
 };
 
 int main(int argc, char* argv[])
@@ -399,6 +435,134 @@ int main(int argc, char* argv[])
 
     std::cout << std::endl;
     smp::zip(print_backward, w1, w2, x, y);
+
+    std::vector<int> v1 { 0, 1, 2, 3 };
+    std::vector<int> v2 { 4, 5, 6, 7, 8 };
+
+    std::set<int> sets;
+    sets.insert(3);
+    sets.insert(2);
+    sets.insert(5);
+
+    std::map<int, std::string> maps;
+    maps.insert({2, "two"});
+    maps.insert({1, "one"});
+    maps.insert({5, "five"});
+
+    std::multiset<int> multisets;
+    multisets.insert(3);
+    multisets.insert(2);
+    multisets.insert(2);
+    multisets.insert(5);
+    multisets.insert(5);
+
+    std::multimap<int, std::string> multimaps;
+    multimaps.insert({4, "four"});
+    multimaps.insert({4, "four2"});
+    multimaps.insert({3, "three"});
+    multimaps.insert({3, "three2"});
+    multimaps.insert({0, "zero"});
+    multimaps.insert({6, "SIX"});
+    multimaps.insert({6, "SIX2"});
+    multimaps.insert({5, "five"});
+
+    std::unordered_set<int> unordered_sets;
+    unordered_sets.insert(3);
+    unordered_sets.insert(2);
+    unordered_sets.insert(5);
+
+    std::unordered_map<int, std::string> unordered_maps;
+    unordered_maps.insert({2, "two"});
+    unordered_maps.insert({1, "one"});
+    unordered_maps.insert({5, "five"});
+
+    std::unordered_multiset<int> unordered_multisets;
+    unordered_multisets.insert(4);
+    unordered_multisets.insert(3);
+    unordered_multisets.insert(3);
+
+    std::unordered_multimap<int, std::string> unordered_multimaps;
+    unordered_multimaps.insert({5, "two"});
+    unordered_multimaps.insert({2, "one"});
+    unordered_multimaps.insert({2, "five"});
+
+    // a sophisticated object
+
+    Z z1 { 18, 9.87, '*', X{ 53.86f, "^_^" }, &x, "TMP", { 1, 3, 6 }, { "smp", "C++", "template" }, { x, x, x }, { v1, v2 },
+          std::make_shared<X>(15.18f, "reflect"), { x, x, x }, sets, maps, multisets, multimaps, unordered_sets,
+          unordered_maps, unordered_multisets, unordered_multimaps };
+
+    std::cout << std::endl;
+    std::cout << "z1 ptr is " << smp::get<4>(z1)->f << " " << smp::get<4>(z1)->s << std::endl;
+    for (auto& n : smp::get<6>(z1))
+         std::cout << "z1 ages is " << n << std::endl;
+    for (auto& n : smp::get<7>(z1))
+         std::cout << "z1 names is " << n << std::endl;
+    for (auto& n : smp::get<8>(z1))
+         std::cout << "z1 xs is " << n.f << " " << n.s << std::endl;
+    for (auto& v : smp::get<9>(z1))
+         for (auto& n : v)
+              std::cout << "z1 ints is " << n << std::endl;
+    std::cout << "z1 sp.f is " << smp::get<10>(z1)->f << std::endl;
+    std::cout << "z1 sp.s is " << smp::get<10>(z1)->s << std::endl;
+    for (auto& n : smp::get<11>(z1))
+         std::cout << "z1 arrs is " << n.f << " " << n.s << std::endl;
+    for (auto& n : smp::get<12>(z1))
+         std::cout << "z1 sets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<13>(z1))
+         std::cout << "z1 maps is " << k << " " << v << std::endl;
+    for (auto& n : smp::get<14>(z1))
+         std::cout << "z1 multisets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<15>(z1))
+         std::cout << "z1 multimaps is " << k << " " << v << std::endl;
+    for (auto& n : smp::get<16>(z1))
+         std::cout << "z1 unordered_sets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<17>(z1))
+         std::cout << "z1 unordered_maps is " << k << " " << v << std::endl;
+    for (auto& n : smp::get<18>(z1))
+         std::cout << "z1 unordered_multisets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<19>(z1))
+         std::cout << "z1 unordered_multimaps is " << k << " " << v << std::endl;
+
+    // marshal a sophisticated object
+    std::string str = smp::marshal(z1);
+
+    // unmarshal a sophisticated object
+    auto z2 = smp::unmarshal<Z>(str);
+
+    // z1 == z2
+
+    std::cout << std::endl;
+    std::cout << "z2 ptr is " << smp::get<4>(z2)->f << " " << smp::get<4>(z2)->s << std::endl;
+    for (auto& n : smp::get<6>(z2))
+         std::cout << "z2 ages is " << n << std::endl;
+    for (auto& n : smp::get<7>(z2))
+         std::cout << "z2 names is " << n << std::endl;
+    for (auto& n : smp::get<8>(z2))
+         std::cout << "z2 xs is " << n.f << " " << n.s << std::endl;
+    for (auto& v : smp::get<9>(z2))
+         for (auto& n : v)
+              std::cout << "z2 ints is " << n << std::endl;
+    std::cout << "z2 sp.f is " << smp::get<10>(z2)->f << std::endl;
+    std::cout << "z2 sp.s is " << smp::get<10>(z2)->s << std::endl;
+    for (auto& n : smp::get<11>(z2))
+         std::cout << "z2 arrs is " << n.f << " " << n.s << std::endl;
+    for (auto& n : smp::get<12>(z2))
+         std::cout << "z2 sets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<13>(z2))
+         std::cout << "z2 maps is " << k << " " << v << std::endl;
+    for (auto& n : smp::get<14>(z2))
+         std::cout << "z2 multisets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<15>(z2))
+         std::cout << "z2 multimaps is " << k << " " << v << std::endl;
+    for (auto& n : smp::get<16>(z2))
+         std::cout << "z2 unordered_sets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<17>(z2))
+         std::cout << "z2 unordered_maps is " << k << " " << v << std::endl;
+    for (auto& n : smp::get<18>(z2))
+         std::cout << "z2 unordered_multisets is " << n << std::endl;
+    for (auto& [k, v] : smp::get<19>(z2))
+         std::cout << "z2 unordered_multimaps is " << k << " " << v << std::endl;
 
     return 0;
 }

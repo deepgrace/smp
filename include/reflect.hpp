@@ -10,6 +10,7 @@
 #ifndef REFLECT_HPP
 #define REFLECT_HPP
 
+#include <memory>
 #include <cstring>
 #include <iomanip>
 #include <visitor.hpp>
@@ -208,14 +209,14 @@ namespace smp
         return smp::apply(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
     }
 
-    template <bool B, typename T, typename L, typename S, typename U>
-    constexpr decltype(auto) copy(L&& l, S&& s, U&& u, size_t size = sizeof(T))
+    template <bool B, typename U, typename L, typename S, typename T>
+    constexpr decltype(auto) copy(L&& l, S&& s, T&& t, size_t size = sizeof(U))
     {
         if constexpr(B)
             s.resize(l + size);
 
         auto dst = s.data() + l;
-        auto src = std::addressof(std::forward<U>(u));
+        auto src = std::addressof(std::forward<T>(t));
 
         if constexpr(B)
             std::memcpy(dst, src, size);
@@ -225,45 +226,149 @@ namespace smp
         return size;
     }
 
-    template <bool B, typename L, typename S, typename T>
-    constexpr decltype(auto) assign(L&& l, S&& s, T&& t)
+    struct assigner
     {
-        for_each([&]<typename U>(U&& u)
+        template <bool B, typename L, typename S, typename T>
+        constexpr void seq(L&& l, S&& s, T&& t, size_t size)
+        {
+            if constexpr(requires { t.resize(0); })
+                t.resize(size);
+
+            for (auto& v : t)
+                 replicate<B>(std::forward<L>(l), std::forward<S>(s), v);
+        }
+
+        template <bool B, typename L, typename S, typename T, typename U = std::remove_cvref_t<T>>
+        constexpr void ass(L&& l, S&& s, T&& t, size_t size)
         {
             if constexpr(B)
-                l = s.length();
+                assign<B, U>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
+            else
+                assign<B, U>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t), size);
+        }
 
-            using type = std::remove_cvref_t<U>;
+        template <bool B, typename L, typename S, typename T>
+        constexpr void browse(L&& l, S&& s, T&& t, size_t size)
+        {
+            using U = std::remove_cvref_t<T>;
 
-            if constexpr(std::is_fundamental_v<type>)
-                l += copy<B, type>(l, s, std::forward<U>(u));
-            else if constexpr(std::is_same_v<type, std::string>)
+            if constexpr(! requires { typename U::key_type; typename U::value_type; })
+                seq<B>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t), size);
+            else
+                ass<B>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t), size);
+        }
+
+        template <bool B, typename U, typename L, typename S, typename T>
+        constexpr void assign(L&& l, S&& s, T&& t)
+        {
+            for (auto& p : t)
             {
-                auto size = B * u.size();
-                l += copy<B, size_t>(l, s, size);
-
-                if constexpr(B)
-                    s.append(std::forward<U>(u));
-                else
-                {
-                    u.resize(size);
-                    l += copy<B, size_t>(l, s, u[0], size);
-                }
+                 if constexpr(! requires { typename U::mapped_type; })
+                     replicate<B>(std::forward<L>(l), std::forward<S>(s), p);
+                 else
+                 {
+                     replicate<B>(std::forward<L>(l), std::forward<S>(s), p.first);
+                     replicate<B>(std::forward<L>(l), std::forward<S>(s), p.second);
+                 }
             }
-            else if constexpr(std::is_class_v<type>)
-                assign<B>(std::forward<L>(l), std::forward<S>(s), std::forward<U>(u));
-        }, std::forward<T>(t));
+        }
 
-        if constexpr(B)
-            return std::forward<S>(s);
-        else
-            return std::forward<T>(t);
-    }
+        template <bool B, typename U, typename L, typename S, typename T>
+        constexpr void assign(L&& l, S&& s, T&& t, size_t size)
+        {
+            for (size_t i = 0; i != size; ++i)
+            {
+                 typename U::key_type key;
+                 replicate<B>(std::forward<L>(l), std::forward<S>(s), key);
+
+                 if constexpr(! requires { typename U::mapped_type; })
+                     t.emplace(key);
+                 else
+                 {
+                     typename U::mapped_type val;
+                     replicate<B>(std::forward<L>(l), std::forward<S>(s), val);
+
+                     t.emplace(key, val);
+                 }
+            }
+        }
+
+        template <bool B, typename L, typename S, typename T>
+        constexpr void assign(L&& l, S&& s, T&& t, size_t size)
+        {
+            if constexpr(B)
+            {
+                l += size;
+                s += std::forward<T>(t);
+            }
+            else
+            {
+                t.resize(size);
+                l += copy<B, size_t>(std::forward<L>(l), std::forward<S>(s), t[0], size);
+            }
+        }
+
+        template <bool B, typename L, typename S, typename T>
+        constexpr decltype(auto) assign(L&& l, S&& s, T&& t)
+        {
+            for_each([&]<typename U>(U&& u)
+            {
+                if constexpr(B)
+                    l = s.length();
+
+                replicate<B>(std::forward<L>(l), std::forward<S>(s), std::forward<U>(u));
+            }, std::forward<T>(t));
+
+            if constexpr(B)
+                return std::forward<S>(s);
+            else
+                return std::forward<T>(t);
+        }
+
+        template <bool B, typename L, typename S, typename T>
+        constexpr void replicate(L&& l, S&& s, T&& t)
+        {
+            using U = std::remove_cvref_t<T>;
+
+            if constexpr(std::is_fundamental_v<U>)
+                l += copy<B, U>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
+            else if constexpr(std::is_pointer_v<U> || requires { typename U::weak_type; })
+            {
+                if constexpr(!B)
+                {
+                    if constexpr(std::is_pointer_v<U>)
+                        t = new std::remove_pointer_t<U>();
+                    else
+                        t = std::make_shared<typename U::element_type>();
+                }
+
+                replicate<B>(std::forward<L>(l), std::forward<S>(s), *t);
+            }
+            else if constexpr(requires { t.begin(); t.end(); })
+            {
+                size_t size = 0;
+
+                if constexpr(requires { t.size(); })
+                    size = B * t.size();
+                else
+                    size = B * std::distance(t.begin(), t.end());
+
+                l += copy<B, size_t>(std::forward<L>(l), std::forward<S>(s), size);
+
+                if constexpr(std::is_same_v<U, std::string>)
+                    assign<B>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t), size);
+                else
+                    browse<B>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t), size);
+            }
+            else if constexpr(std::is_class_v<U>)
+                assign<B>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
+        }
+    };
 
     template <typename T>
     constexpr decltype(auto) marshal(std::string& s, T&& t)
     {
-        return assign<1>(0, s, std::forward<T>(t));
+        return assigner().assign<1>(0, s, std::forward<T>(t));
     }
 
     template <typename T>
@@ -286,7 +391,7 @@ namespace smp
     template <typename T>
     constexpr decltype(auto) unmarshal(size_t& l, const std::string& s, T&& t)
     {
-        return assign<0>(l, s, std::forward<T>(t));
+        return assigner().assign<0>(l, s, std::forward<T>(t));
     }
 
     template <typename T>
@@ -445,7 +550,7 @@ namespace smp
     {
         if constexpr(requires { std::declval<S>() << std::declval<T>(); })
             return s << std::forward<T>(t.value);
-        else 
+        else
         {
             decltype(auto) f = tie_fuple(std::forward<T>(t.value));
 
@@ -457,7 +562,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>>)
     constexpr S& operator>>(S& s, io_t<T>&& t)
     {
-        if constexpr(requires{ std::declval<S>() >> std::declval<T>(); })
+        if constexpr(requires { std::declval<S>() >> std::declval<T>(); })
             return s >> std::forward<T>(t.value);
         else 
         {
@@ -509,7 +614,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>> && !is_fuple_v<std::remove_cvref_t<U>>)
     constexpr bool lt(T&& t, U&& u)
     {
-        if constexpr(requires{ t < u; })
+        if constexpr(requires { t < u; })
             return std::forward<T>(t) < std::forward<U>(u);
         else
             return tie_fuple(std::forward<T>(t)) < tie_fuple(std::forward<U>(u));
@@ -519,7 +624,7 @@ namespace smp
     requires (!is_fuple_v<std::remove_cvref_t<T>> && !is_fuple_v<std::remove_cvref_t<U>>)
     constexpr bool ne(T&& t, U&& u)
     {
-        if constexpr(requires{ t != u; })
+        if constexpr(requires { t != u; })
             return std::forward<T>(t) != std::forward<U>(u);
         else
             return tie_fuple(std::forward<T>(t)) != tie_fuple(std::forward<U>(u));
