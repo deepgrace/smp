@@ -209,6 +209,19 @@ namespace smp
         return smp::apply(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
     }
 
+    template <size_t lower, size_t upper, typename T>
+    constexpr decltype(auto) range(T&& t)
+    {
+        return [&]<size_t... N>(std::index_sequence<N...>)
+        {
+            if constexpr(is_tuple_v<std::remove_cvref_t<T>>)
+                return std::tie(std::get<N>(std::forward<T>(t))...);
+            else
+                return smp::tie(smp::get<N>(std::forward<T>(t))...);
+        }
+        (std::make_index_sequence<upper - lower>());
+    }
+
     template <bool B, typename U, typename L, typename S, typename T>
     constexpr decltype(auto) copy(L&& l, S&& s, T&& t, size_t size = sizeof(U))
     {
@@ -229,7 +242,7 @@ namespace smp
     struct assigner
     {
         template <bool B, typename L, typename S, typename T>
-        constexpr void seq(L&& l, S&& s, T&& t, size_t size)
+        constexpr decltype(auto) seq(L&& l, S&& s, T&& t, size_t size)
         {
             if constexpr(requires { t.resize(0); })
                 t.resize(size);
@@ -239,7 +252,7 @@ namespace smp
         }
 
         template <bool B, typename L, typename S, typename T, typename U = std::remove_cvref_t<T>>
-        constexpr void ass(L&& l, S&& s, T&& t, size_t size)
+        constexpr decltype(auto) ass(L&& l, S&& s, T&& t, size_t size)
         {
             if constexpr(B)
                 assign<B, U>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
@@ -248,7 +261,7 @@ namespace smp
         }
 
         template <bool B, typename L, typename S, typename T>
-        constexpr void browse(L&& l, S&& s, T&& t, size_t size)
+        constexpr decltype(auto) browse(L&& l, S&& s, T&& t, size_t size)
         {
             using U = std::remove_cvref_t<T>;
 
@@ -259,7 +272,7 @@ namespace smp
         }
 
         template <bool B, typename U, typename L, typename S, typename T>
-        constexpr void assign(L&& l, S&& s, T&& t)
+        constexpr decltype(auto) assign(L&& l, S&& s, T&& t)
         {
             for (auto& p : t)
             {
@@ -274,7 +287,7 @@ namespace smp
         }
 
         template <bool B, typename U, typename L, typename S, typename T>
-        constexpr void assign(L&& l, S&& s, T&& t, size_t size)
+        constexpr decltype(auto) assign(L&& l, S&& s, T&& t, size_t size)
         {
             for (size_t i = 0; i != size; ++i)
             {
@@ -294,7 +307,7 @@ namespace smp
         }
 
         template <bool B, typename L, typename S, typename T>
-        constexpr void assign(L&& l, S&& s, T&& t, size_t size)
+        constexpr decltype(auto) assign(L&& l, S&& s, T&& t, size_t size)
         {
             if constexpr(B)
             {
@@ -326,7 +339,7 @@ namespace smp
         }
 
         template <bool B, typename L, typename S, typename T>
-        constexpr void replicate(L&& l, S&& s, T&& t)
+        constexpr decltype(auto) replicate(L&& l, S&& s, T&& t)
         {
             using U = std::remove_cvref_t<T>;
 
@@ -362,13 +375,18 @@ namespace smp
             }
             else if constexpr(std::is_class_v<U>)
                 assign<B>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
+
+            if constexpr(B)
+                return std::forward<S>(s);
+            else
+                return std::forward<T>(t);
         }
     };
 
     template <typename T>
     constexpr decltype(auto) marshal(std::string& s, T&& t)
     {
-        return assigner().assign<1>(0, s, std::forward<T>(t));
+        return assigner().replicate<1>(0, s, std::forward<T>(t));
     }
 
     template <typename T>
@@ -388,10 +406,33 @@ namespace smp
         return marshal(t);
     }
 
+    template <size_t lower, size_t upper, typename T>
+    constexpr decltype(auto) marshal(std::string& s, T&& t)
+    {
+        return marshal(s, range<lower, upper>(std::forward<T>(t)));
+    }
+
+    template <size_t lower, size_t upper, typename T>
+    constexpr decltype(auto) marshal(T&& t)
+    {
+        std::string s;
+        marshal<lower, upper>(s, std::forward<T>(t));
+
+        return s;
+    }
+
+    template <size_t lower, size_t upper, typename T>
+    constexpr decltype(auto) marshal()
+    {
+        T t;
+
+        return marshal<lower, upper>(t);
+    }
+
     template <typename T>
     constexpr decltype(auto) unmarshal(size_t& l, const std::string& s, T&& t)
     {
-        return assigner().assign<0>(l, s, std::forward<T>(t));
+        return assigner().replicate<0>(l, s, std::forward<T>(t));
     }
 
     template <typename T>
@@ -408,6 +449,30 @@ namespace smp
     {
         T t;
         unmarshal(s, t);
+
+        return t;
+    }
+
+    template <size_t lower, size_t upper, typename T>
+    constexpr decltype(auto) unmarshal(size_t& l, const std::string& s, T&& t)
+    {
+        return unmarshal(l, s, range<lower, upper>(std::forward<T>(t)));
+    }
+
+    template <size_t lower, size_t upper, typename T>
+    constexpr decltype(auto) unmarshal(const std::string& s, T&& t)
+    {
+        size_t l = 0;
+        unmarshal<lower, upper>(l, s, std::forward<T>(t));
+
+        return std::forward<T>(t);
+    }
+
+    template <size_t lower, size_t upper, typename T>
+    constexpr decltype(auto) unmarshal(const std::string& s)
+    {
+        T t;
+        unmarshal<lower, upper>(s, t);
 
         return t;
     }

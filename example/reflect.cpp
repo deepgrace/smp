@@ -47,8 +47,8 @@ struct Y
     X x;
 };
 
-// smp can reflect, marshal and unmarshal a structure with fundamental types, UDTS and all STL containers as its members
-// see line 491 and line 527
+// smp can reflect, marshal and unmarshal fundamental types, UDTS and all STL containers
+// see line 534
 
 struct Z
 {
@@ -492,77 +492,62 @@ int main(int argc, char* argv[])
           std::make_shared<X>(15.18f, "reflect"), { x, x, x }, sets, maps, multisets, multimaps, unordered_sets,
           unordered_maps, unordered_multisets, unordered_multimaps };
 
-    std::cout << std::endl;
-    std::cout << "z1 ptr is " << smp::get<4>(z1)->f << " " << smp::get<4>(z1)->s << std::endl;
-    for (auto& n : smp::get<6>(z1))
-         std::cout << "z1 ages is " << n << std::endl;
-    for (auto& n : smp::get<7>(z1))
-         std::cout << "z1 names is " << n << std::endl;
-    for (auto& n : smp::get<8>(z1))
-         std::cout << "z1 xs is " << n.f << " " << n.s << std::endl;
-    for (auto& v : smp::get<9>(z1))
-         for (auto& n : v)
-              std::cout << "z1 ints is " << n << std::endl;
-    std::cout << "z1 sp.f is " << smp::get<10>(z1)->f << std::endl;
-    std::cout << "z1 sp.s is " << smp::get<10>(z1)->s << std::endl;
-    for (auto& n : smp::get<11>(z1))
-         std::cout << "z1 arrs is " << n.f << " " << n.s << std::endl;
-    for (auto& n : smp::get<12>(z1))
-         std::cout << "z1 sets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<13>(z1))
-         std::cout << "z1 maps is " << k << " " << v << std::endl;
-    for (auto& n : smp::get<14>(z1))
-         std::cout << "z1 multisets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<15>(z1))
-         std::cout << "z1 multimaps is " << k << " " << v << std::endl;
-    for (auto& n : smp::get<16>(z1))
-         std::cout << "z1 unordered_sets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<17>(z1))
-         std::cout << "z1 unordered_maps is " << k << " " << v << std::endl;
-    for (auto& n : smp::get<18>(z1))
-         std::cout << "z1 unordered_multisets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<19>(z1))
-         std::cout << "z1 unordered_multimaps is " << k << " " << v << std::endl;
+    auto printz = [](const Z& z, const std::string& s)
+    {
+        std::cout << std::endl;
+        std::cout << s << " ptr is " << smp::get<4>(z)->f << " " << smp::get<4>(z)->s << std::endl;
+        for (auto& n : smp::get<6>(z))
+             std::cout << s << " ages is " << n << std::endl;
+        for (auto& n : smp::get<7>(z))
+             std::cout << s << " names is " << n << std::endl;
+        for (auto& n : smp::get<8>(z))
+             std::cout << s << " xs is " << n.f << " " << n.s << std::endl;
+        for (auto& v : smp::get<9>(z))
+             for (auto& n : v)
+                  std::cout << s << " ints is " << n << std::endl;
+        std::cout << s << " sp.f is " << smp::get<10>(z)->f << std::endl;
+        std::cout << s << " sp.s is " << smp::get<10>(z)->s << std::endl;
+        for (auto& n : smp::get<11>(z))
+             std::cout << s << " arrs is " << n.f << " " << n.s << std::endl;
+        for (auto& n : smp::get<12>(z))
+             std::cout << s << " sets is " << n << std::endl;
+        for (auto& [k, v] : smp::get<13>(z))
+             std::cout << s << " maps is " << k << " " << v << std::endl;
+        for (auto& n : smp::get<14>(z))
+             std::cout << s << " multisets is " << n << std::endl;
+        for (auto& [k, v] : smp::get<15>(z))
+             std::cout << s << " multimaps is " << k << " " << v << std::endl;
+        for (auto& n : smp::get<16>(z))
+             std::cout << s << " unordered_sets is " << n << std::endl;
+        for (auto& [k, v] : smp::get<17>(z))
+             std::cout << s << " unordered_maps is " << k << " " << v << std::endl;
+        for (auto& n : smp::get<18>(z))
+             std::cout << s << " unordered_multisets is " << n << std::endl;
+        for (auto& [k, v] : smp::get<19>(z))
+             std::cout << s << " unordered_multimaps is " << k << " " << v << std::endl;
+    };
+
+    static_assert(smp::arity_v<Z> == 20);
+
+    printz(z1, "z1");
 
     // marshal a sophisticated object
-    std::string str = smp::marshal(z1);
+    std::string zstr1 = smp::marshal(z1);
 
     // unmarshal a sophisticated object
-    auto z2 = smp::unmarshal<Z>(str);
+    auto z2 = smp::unmarshal<Z>(zstr1);
 
     // z1 == z2
+    printz(z2, "z2");
 
-    std::cout << std::endl;
-    std::cout << "z2 ptr is " << smp::get<4>(z2)->f << " " << smp::get<4>(z2)->s << std::endl;
-    for (auto& n : smp::get<6>(z2))
-         std::cout << "z2 ages is " << n << std::endl;
-    for (auto& n : smp::get<7>(z2))
-         std::cout << "z2 names is " << n << std::endl;
-    for (auto& n : smp::get<8>(z2))
-         std::cout << "z2 xs is " << n.f << " " << n.s << std::endl;
-    for (auto& v : smp::get<9>(z2))
-         for (auto& n : v)
-              std::cout << "z2 ints is " << n << std::endl;
-    std::cout << "z2 sp.f is " << smp::get<10>(z2)->f << std::endl;
-    std::cout << "z2 sp.s is " << smp::get<10>(z2)->s << std::endl;
-    for (auto& n : smp::get<11>(z2))
-         std::cout << "z2 arrs is " << n.f << " " << n.s << std::endl;
-    for (auto& n : smp::get<12>(z2))
-         std::cout << "z2 sets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<13>(z2))
-         std::cout << "z2 maps is " << k << " " << v << std::endl;
-    for (auto& n : smp::get<14>(z2))
-         std::cout << "z2 multisets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<15>(z2))
-         std::cout << "z2 multimaps is " << k << " " << v << std::endl;
-    for (auto& n : smp::get<16>(z2))
-         std::cout << "z2 unordered_sets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<17>(z2))
-         std::cout << "z2 unordered_maps is " << k << " " << v << std::endl;
-    for (auto& n : smp::get<18>(z2))
-         std::cout << "z2 unordered_multisets is " << n << std::endl;
-    for (auto& [k, v] : smp::get<19>(z2))
-         std::cout << "z2 unordered_multimaps is " << k << " " << v << std::endl;
+    // marshal range of a sophisticated object
+    std::string zstr2 = smp::marshal<0, 20>(z2);
+
+    // unmarshal range of a sophisticated object
+    auto z3 = smp::unmarshal<0, 20, Z>(zstr2);
+
+    // z2 == z3
+    printz(z3, "z3");
 
     return 0;
 }
