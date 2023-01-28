@@ -549,5 +549,14 @@ int main(int argc, char* argv[])
     // z2 == z3
     printz(z3, "z3");
 
+    // marshal a sophisticated object by index
+    std::string zstr3 = smp::serialize<19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9>(z3);
+
+    // unmarshal a sophisticated object by index
+    auto z4 = smp::deserialize<Z, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9>(zstr3);
+
+    // z3 == z4
+    printz(z4, "z4");
+
     return 0;
 }

@@ -209,6 +209,25 @@ namespace smp
         return smp::apply(std::forward<F>(f), tie_fuple(std::forward<T>(t)));
     }
 
+    template <auto... N, typename T>
+    constexpr decltype(auto) choose(T&& t)
+    {
+        if constexpr(is_tuple_v<std::remove_cvref_t<T>>)
+            return std::tie(std::get<N>(std::forward<T>(t))...);
+        else
+            return smp::tie(smp::get<N>(std::forward<T>(t))...);
+    }
+
+    template <typename I, typename T>
+    constexpr decltype(auto) choose(T&& t)
+    {
+        return [&]<auto... N>(const std::index_sequence<N...>&)
+        {
+            return choose<N...>(std::forward<T>(t));
+        }
+        (I());
+    }
+
     template <size_t lower, size_t upper, typename T>
     constexpr decltype(auto) range(T&& t)
     {
@@ -473,6 +492,53 @@ namespace smp
     {
         T t;
         unmarshal<lower, upper>(s, t);
+
+        return t;
+    }
+
+    template <auto... N, typename T>
+    constexpr decltype(auto) serialize(std::string& s, T&& t)
+    {
+        return marshal(s, choose<N...>(std::forward<T>(t)));
+    }
+
+    template <auto... N, typename T>
+    constexpr decltype(auto) serialize(T&& t)
+    {
+        std::string s;
+        serialize<N...>(s, std::forward<T>(t));
+
+        return s;
+    }
+
+    template <typename T, auto... N>
+    constexpr decltype(auto) serialize()
+    {
+        T t;
+
+        return serialize<N...>(t);
+    }
+
+    template <auto... N, typename T>
+    constexpr decltype(auto) deserialize(size_t& l, const std::string& s, T&& t)
+    {
+        return unmarshal(l, s, choose<N...>(std::forward<T>(t)));
+    }
+
+    template <auto... N, typename T>
+    constexpr decltype(auto) deserialize(const std::string& s, T&& t)
+    {
+        size_t l = 0;
+        deserialize<N...>(l, s, std::forward<T>(t));
+
+        return std::forward<T>(t);
+    }
+
+    template <typename T, auto... N>
+    constexpr decltype(auto) deserialize(const std::string& s)
+    {
+        T t;
+        deserialize<N...>(s, t);
 
         return t;
     }
