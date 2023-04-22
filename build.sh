@@ -4,7 +4,7 @@ dst=/tmp
 path=example
 
 flags=(-I include -m64 -std=c++23 -s -Wall -O3)
-executables=(fuple indexer lists reflect smp visitor)
+executables=(fuple indexer lists reflect smp visitor invocable_name)
 
 for bin in ${executables[@]}; do
       g++ "${flags[@]}" -o ${dst}/${bin} ${path}/${bin}.cpp

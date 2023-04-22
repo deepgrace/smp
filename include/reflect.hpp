@@ -362,7 +362,7 @@ namespace smp
         {
             using U = std::remove_cvref_t<T>;
 
-            if constexpr(std::is_fundamental_v<U>)
+            if constexpr(std::is_enum_v<U> || std::is_fundamental_v<U>)
                 l += copy<B, U>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
             else if constexpr(std::is_pointer_v<U> || requires { typename U::weak_type; })
             {
@@ -402,10 +402,10 @@ namespace smp
         }
     };
 
-    template <typename T>
-    constexpr decltype(auto) marshal(std::string& s, T&& t)
+    template <typename S, typename T>
+    constexpr decltype(auto) marshal(S&& s, T&& t)
     {
-        return assigner().replicate<1>(0, s, std::forward<T>(t));
+        return assigner().replicate<1>(0, std::forward<S>(s), std::forward<T>(t));
     }
 
     template <typename T>
@@ -425,10 +425,10 @@ namespace smp
         return marshal(t);
     }
 
-    template <size_t lower, size_t upper, typename T>
-    constexpr decltype(auto) marshal(std::string& s, T&& t)
+    template <size_t lower, size_t upper, typename S, typename T>
+    constexpr decltype(auto) marshal(S&& s, T&& t)
     {
-        return marshal(s, range<lower, upper>(std::forward<T>(t)));
+        return marshal(std::forward<S>(s), range<lower, upper>(std::forward<T>(t)));
     }
 
     template <size_t lower, size_t upper, typename T>
@@ -448,58 +448,58 @@ namespace smp
         return marshal<lower, upper>(t);
     }
 
-    template <typename T>
-    constexpr decltype(auto) unmarshal(size_t& l, const std::string& s, T&& t)
+    template <typename S, typename T>
+    constexpr decltype(auto) unmarshal(size_t& l, S&& s, T&& t)
     {
-        return assigner().replicate<0>(l, s, std::forward<T>(t));
+        return assigner().replicate<0>(l, std::forward<S>(s), std::forward<T>(t));
     }
 
-    template <typename T>
-    constexpr decltype(auto) unmarshal(const std::string& s, T&& t)
+    template <typename S, typename T>
+    constexpr decltype(auto) unmarshal(S&& s, T&& t)
     {
         size_t l = 0;
-        unmarshal(l, s, std::forward<T>(t));
+        unmarshal(l, std::forward<S>(s), std::forward<T>(t));
 
         return std::forward<T>(t);
     }
 
-    template <typename T>
-    constexpr decltype(auto) unmarshal(const std::string& s)
+    template <typename T, typename S>
+    constexpr decltype(auto) unmarshal(S&& s)
     {
         T t;
-        unmarshal(s, t);
+        unmarshal(std::forward<S>(s), t);
 
         return t;
     }
 
-    template <size_t lower, size_t upper, typename T>
-    constexpr decltype(auto) unmarshal(size_t& l, const std::string& s, T&& t)
+    template <size_t lower, size_t upper, typename S, typename T>
+    constexpr decltype(auto) unmarshal(size_t& l, S&& s, T&& t)
     {
-        return unmarshal(l, s, range<lower, upper>(std::forward<T>(t)));
+        return unmarshal(l, std::forward<S>(s), range<lower, upper>(std::forward<T>(t)));
     }
 
-    template <size_t lower, size_t upper, typename T>
-    constexpr decltype(auto) unmarshal(const std::string& s, T&& t)
+    template <size_t lower, size_t upper, typename S, typename T>
+    constexpr decltype(auto) unmarshal(S&& s, T&& t)
     {
         size_t l = 0;
-        unmarshal<lower, upper>(l, s, std::forward<T>(t));
+        unmarshal<lower, upper>(l, std::forward<S>(s), std::forward<T>(t));
 
         return std::forward<T>(t);
     }
 
-    template <size_t lower, size_t upper, typename T>
-    constexpr decltype(auto) unmarshal(const std::string& s)
+    template <size_t lower, size_t upper, typename T, typename S>
+    constexpr decltype(auto) unmarshal(S&& s)
     {
         T t;
-        unmarshal<lower, upper>(s, t);
+        unmarshal<lower, upper>(std::forward<S>(s), t);
 
         return t;
     }
 
-    template <auto... N, typename T>
-    constexpr decltype(auto) serialize(std::string& s, T&& t)
+    template <auto... N, typename S, typename T>
+    constexpr decltype(auto) serialize(S&& s, T&& t)
     {
-        return marshal(s, choose<N...>(std::forward<T>(t)));
+        return marshal(std::forward<S>(s), choose<N...>(std::forward<T>(t)));
     }
 
     template <auto... N, typename T>
@@ -519,26 +519,26 @@ namespace smp
         return serialize<N...>(t);
     }
 
-    template <auto... N, typename T>
-    constexpr decltype(auto) deserialize(size_t& l, const std::string& s, T&& t)
+    template <auto... N, typename S, typename T>
+    constexpr decltype(auto) deserialize(size_t& l, S&& s, T&& t)
     {
-        return unmarshal(l, s, choose<N...>(std::forward<T>(t)));
+        return unmarshal(l, std::forward<S>(s), choose<N...>(std::forward<T>(t)));
     }
 
-    template <auto... N, typename T>
-    constexpr decltype(auto) deserialize(const std::string& s, T&& t)
+    template <auto... N, typename S, typename T>
+    constexpr decltype(auto) deserialize(S&& s, T&& t)
     {
         size_t l = 0;
-        deserialize<N...>(l, s, std::forward<T>(t));
+        deserialize<N...>(l, std::forward<S>(s), std::forward<T>(t));
 
         return std::forward<T>(t);
     }
 
-    template <typename T, auto... N>
-    constexpr decltype(auto) deserialize(const std::string& s)
+    template <typename T, auto... N, typename S>
+    constexpr decltype(auto) deserialize(S&& s)
     {
         T t;
-        deserialize<N...>(s, t);
+        deserialize<N...>(std::forward<S>(s), t);
 
         return t;
     }
