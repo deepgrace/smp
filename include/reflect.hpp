@@ -343,7 +343,7 @@ namespace smp
         template <bool B, typename L, typename S, typename T>
         constexpr decltype(auto) assign(L&& l, S&& s, T&& t)
         {
-            for_each([&]<typename U>(U&& u)
+            smp::for_each([&]<typename U>(U&& u)
             {
                 if constexpr(B)
                     l = s.length();
@@ -375,6 +375,19 @@ namespace smp
                 }
 
                 replicate<B>(std::forward<L>(l), std::forward<S>(s), *t);
+            }
+            else if constexpr(requires { t.has_value(); })
+            {
+                bool size = t.has_value();
+                l += copy<B, bool>(std::forward<L>(l), std::forward<S>(s), size);
+
+                if (size)
+                {
+                    if constexpr(!B)
+                        t = typename std::remove_cvref_t<T>::value_type();
+
+                    replicate<B>(std::forward<L>(l), std::forward<S>(s), *t);
+                }
             }
             else if constexpr(requires { t.begin(); t.end(); })
             {
@@ -931,4 +944,5 @@ namespace smp
     template <size_t N, typename T>
     using tuple_element_t = typename tuple_element<N, T>::type;
 }
+
 #endif
