@@ -558,5 +558,30 @@ int main(int argc, char* argv[])
     // z3 == z4
     printz(z4, "z4");
 
+    // compute the serialized size of the object
+    size_t size = smp::size_bytes(y);
+    assert(size == ys.size());
+
+    // marshal into allocated buffer
+    char* buff = new char[size];
+    std::string_view yv = smp::marshal(buff, size, y);
+
+    Y yg;
+    Y yh;
+
+    // unmarshal from allocated buffer
+    smp::unmarshal(yv, yg);
+    smp::unmarshal(buff, size, yh);
+
+    assert(yg.i == y.i);
+    assert(yg.d == y.d);
+
+    assert(yh.c == y.c);
+    assert(yh.x.f == y.x.f);
+
+    assert(yg.x.s == yh.x.s);
+
+    delete [] buff;
+
     return 0;
 }

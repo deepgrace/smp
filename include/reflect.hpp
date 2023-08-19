@@ -13,6 +13,7 @@
 #include <memory>
 #include <cstring>
 #include <iomanip>
+#include <string_view>
 #include <visitor.hpp>
 
 namespace smp
@@ -241,13 +242,16 @@ namespace smp
         (std::make_index_sequence<upper - lower>());
     }
 
-    template <bool B, typename U, typename L, typename S, typename T>
+    template <bool C, bool B, typename U, typename L, typename S, typename T>
     constexpr decltype(auto) copy(L&& l, S&& s, T&& t, size_t size = sizeof(U))
     {
-        if constexpr(B)
+        if constexpr(!C)
+            return size;
+
+        if constexpr(B && requires { s.resize(0); })
             s.resize(l + size);
 
-        auto dst = s.data() + l;
+        auto dst = (void*)(s.data() + l);
         auto src = std::addressof(std::forward<T>(t));
 
         if constexpr(B)
@@ -258,12 +262,13 @@ namespace smp
         return size;
     }
 
+    template <bool C>
     struct assigner
     {
         template <bool B, typename L, typename S, typename T>
         constexpr decltype(auto) seq(L&& l, S&& s, T&& t, size_t size)
         {
-            if constexpr(requires { t.resize(0); })
+            if constexpr(!B && requires { t.resize(0); })
                 t.resize(size);
 
             for (auto& v : t)
@@ -328,16 +333,10 @@ namespace smp
         template <bool B, typename L, typename S, typename T>
         constexpr decltype(auto) assign(L&& l, S&& s, T&& t, size_t size)
         {
-            if constexpr(B)
-            {
-                l += size;
-                s += std::forward<T>(t);
-            }
-            else
-            {
+            if constexpr(!B)
                 t.resize(size);
-                l += copy<B, size_t>(std::forward<L>(l), std::forward<S>(s), t[0], size);
-            }
+
+            l += copy<C, B, size_t>(std::forward<L>(l), std::forward<S>(s), t[0], size);
         }
 
         template <bool B, typename L, typename S, typename T>
@@ -345,7 +344,7 @@ namespace smp
         {
             smp::for_each([&]<typename U>(U&& u)
             {
-                if constexpr(B)
+                if constexpr(C && B && requires { s.resize(0); })
                     l = s.length();
 
                 replicate<B>(std::forward<L>(l), std::forward<S>(s), std::forward<U>(u));
@@ -363,7 +362,7 @@ namespace smp
             using U = std::remove_cvref_t<T>;
 
             if constexpr(std::is_enum_v<U> || std::is_fundamental_v<U>)
-                l += copy<B, U>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
+                l += copy<C, B, U>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t));
             else if constexpr(std::is_pointer_v<U> || requires { typename U::weak_type; })
             {
                 if constexpr(!B)
@@ -379,7 +378,7 @@ namespace smp
             else if constexpr(requires { t.has_value(); })
             {
                 bool size = t.has_value();
-                l += copy<B, bool>(std::forward<L>(l), std::forward<S>(s), size);
+                l += copy<C, B, bool>(std::forward<L>(l), std::forward<S>(s), size);
 
                 if (size)
                 {
@@ -398,7 +397,7 @@ namespace smp
                 else
                     size = B * std::distance(t.begin(), t.end());
 
-                l += copy<B, size_t>(std::forward<L>(l), std::forward<S>(s), size);
+                l += copy<C, B, size_t>(std::forward<L>(l), std::forward<S>(s), size);
 
                 if constexpr(std::is_same_v<U, std::string>)
                     assign<B>(std::forward<L>(l), std::forward<S>(s), std::forward<T>(t), size);
@@ -415,10 +414,19 @@ namespace smp
         }
     };
 
+    template <typename T>
+    constexpr decltype(auto) size_bytes(T&& t)
+    {
+        size_t l = 0;
+        assigner<0>().replicate<1>(l, std::string_view(), std::forward<T>(t));
+
+        return l;
+    }
+
     template <typename S, typename T>
     constexpr decltype(auto) marshal(S&& s, T&& t)
     {
-        return assigner().replicate<1>(0, std::forward<S>(s), std::forward<T>(t));
+        return assigner<1>().replicate<1>(0, std::forward<S>(s), std::forward<T>(t));
     }
 
     template <typename T>
@@ -461,10 +469,19 @@ namespace smp
         return marshal<lower, upper>(t);
     }
 
+    template <typename T>
+    constexpr decltype(auto) marshal(char* data, size_t size, T&& t)
+    {
+        std::string_view s(data, size);
+        marshal(s, std::forward<T>(t));
+
+        return s;
+    }
+
     template <typename S, typename T>
     constexpr decltype(auto) unmarshal(size_t& l, S&& s, T&& t)
     {
-        return assigner().replicate<0>(l, std::forward<S>(s), std::forward<T>(t));
+        return assigner<1>().replicate<0>(l, std::forward<S>(s), std::forward<T>(t));
     }
 
     template <typename S, typename T>
@@ -507,6 +524,15 @@ namespace smp
         unmarshal<lower, upper>(std::forward<S>(s), t);
 
         return t;
+    }
+
+    template <typename T>
+    constexpr decltype(auto) unmarshal(char* data, size_t size, T&& t)
+    {
+        std::string_view s(data, size);
+        unmarshal(s, std::forward<T>(t));
+
+        return std::forward<T>(t);
     }
 
     template <auto... N, typename S, typename T>
