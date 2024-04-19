@@ -111,6 +111,30 @@ namespace smp
     template <typename T>
     using members_t = typename members<T>::type;
 
+    template <auto f>
+    consteval decltype(auto) member_stem()
+    {
+        constexpr std::string_view h{"[with auto f = "};
+        constexpr std::string_view p{__PRETTY_FUNCTION__};
+
+        constexpr auto i = p.find(h) + h.size();
+        constexpr auto j = (p[i] == '(') + i + 1;
+
+        constexpr auto n = p.substr(i, p.size() - j);
+        constexpr auto s = n.substr(n.rfind("::") + 2);
+
+        return s;
+    }
+
+    template <typename T, typename U>
+    consteval decltype(auto) member_index()
+    {
+        return fuple_index<T, 1>(members_t<U>());
+    }
+
+    template <typename T, typename U>
+    inline constexpr auto member_index_v = member_index<T, U>();
+
     template <typename T>
     struct member_pointers
     {
@@ -252,7 +276,7 @@ namespace smp
             s.resize(l + size);
 
         auto dst = (void*)(s.data() + l);
-        auto src = std::addressof(std::forward<T>(t));
+        auto src = (void*)std::addressof(std::forward<T>(t));
 
         if constexpr(B)
             std::memcpy(dst, src, size);

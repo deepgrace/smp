@@ -26,6 +26,15 @@ int main(int argc, char* argv[])
     smp::fuple<short, char> f2;
     smp::fuple<int&, smp::fuple<double&>, char> f3(i, smp::tie(j), 'X');
 
+    static_assert(smp::fuple_index<char>(f2) == 1);
+    static_assert(smp::fuple_index<short>(f2) == 0);
+
+    static_assert(smp::fuple_index<int>(f3) == 3);
+    static_assert(smp::fuple_index<int&, 0>(f3) == 0);
+
+    static_assert(smp::fuple_index<int, 1>(f3) == 0);
+    static_assert(smp::fuple_index<int&, 1>(f3) == 0);
+
     int p = 23;
     std::string s = "tmp";
 

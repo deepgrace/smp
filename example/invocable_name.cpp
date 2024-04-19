@@ -35,6 +35,7 @@ class Z
 {
 public:
     X pull(int, X);
+    int member;
 };
 
 struct U
@@ -96,6 +97,7 @@ int main(int argc, char* argv[])
     std::cout << smp::invocable_name<push>() << std::endl;
     std::cout << smp::invocable_name<&Y::pull>() << std::endl;
     std::cout << smp::invocable_name<&K::Z::pull>() << std::endl;
+    std::cout << smp::invocable_name<&K::Z::member>() << std::endl;
     std::cout << smp::invocable_name<a::b::c::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << smp::invocable_name<d::e::f::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << smp::invocable_name<a::b::c::tmp<std::tuple<int>, std::tuple>>() << std::endl;
@@ -114,6 +116,7 @@ int main(int argc, char* argv[])
     std::cout << smp::invocable_sign<push>() << std::endl;
     std::cout << smp::invocable_sign<&Y::pull>() << std::endl;
     std::cout << smp::invocable_sign<&K::Z::pull>() << std::endl;
+    std::cout << smp::invocable_sign<&K::Z::member>() << std::endl;
     std::cout << smp::invocable_sign<a::b::c::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << smp::invocable_sign<d::e::f::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << smp::invocable_sign<a::b::c::tmp<std::tuple<int>, std::tuple>>() << std::endl;
@@ -132,6 +135,7 @@ int main(int argc, char* argv[])
     std::cout << smp::invocable_stem<push>() << std::endl;
     std::cout << smp::invocable_stem<&Y::pull>() << std::endl;
     std::cout << smp::invocable_stem<&K::Z::pull>() << std::endl;
+    std::cout << smp::invocable_stem<&K::Z::member>() << std::endl;
     std::cout << smp::invocable_stem<a::b::c::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << smp::invocable_stem<d::e::f::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << smp::invocable_stem<a::b::c::tmp<std::tuple<int>, std::tuple>>() << std::endl;
@@ -150,6 +154,7 @@ int main(int argc, char* argv[])
     std::cout << loc::pretty_function<push>() << std::endl;
     std::cout << loc::pretty_function<&Y::pull>() << std::endl;
     std::cout << loc::pretty_function<&K::Z::pull>() << std::endl;
+    std::cout << loc::pretty_function<&K::Z::member>() << std::endl;
     std::cout << loc::pretty_function<a::b::c::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << loc::pretty_function<d::e::f::tmp<K::U::V, std::tuple>>() << std::endl;
     std::cout << loc::pretty_function<a::b::c::tmp<std::tuple<int>, std::tuple>>() << std::endl;

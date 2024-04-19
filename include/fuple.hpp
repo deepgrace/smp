@@ -172,10 +172,28 @@ namespace smp
         return F<T, U>() ? 0 : index<F, T, Args...>() + 1;
     }
 
-    template <typename... Args>
+    template <bool strip, typename... Args>
     constexpr size_t index()
     {
-        return index<std::is_same, std::remove_cvref_t<Args>...>();
+        return index<std::is_same, std::conditional_t<strip, std::remove_cvref_t<Args>, Args>...>();
+    }
+
+    template <typename T, bool strip = 0, typename... Args>
+    constexpr decltype(auto) fuple_index(fuple<Args...>& t) noexcept
+    {
+        return index<strip, T, Args...>();
+    }
+
+    template <typename T, bool strip = 0, typename... Args>
+    constexpr decltype(auto) fuple_index(fuple<Args...>&& t) noexcept
+    {
+        return index<strip, T, Args...>();
+    }
+
+    template <typename T, bool strip = 0, typename... Args>
+    constexpr decltype(auto) fuple_index(const fuple<Args...>& t) noexcept
+    {
+        return index<strip, T, Args...>();
     }
 
     template <size_t N, typename... Args>
@@ -202,19 +220,19 @@ namespace smp
     template <typename T, typename... Args>
     constexpr decltype(auto) get(fuple<Args...>& t) noexcept
     {
-        return select<index<T, Args...>()>(t);
+        return select<index<1, T, Args...>()>(t);
     }
 
     template <typename T, typename... Args>
     constexpr decltype(auto) get(fuple<Args...>&& t) noexcept
     {
-        return select<index<T, Args...>()>(std::move(t));
+        return select<index<1, T, Args...>()>(std::move(t));
     }
 
     template <typename T, typename... Args>
     constexpr decltype(auto) get(const fuple<Args...>& t) noexcept
     {
-        return select<index<T, Args...>()>(t);
+        return select<index<1, T, Args...>()>(t);
     }
 
     template <typename T>

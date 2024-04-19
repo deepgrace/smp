@@ -79,6 +79,11 @@ int main(int argc, char* argv[])
     X x { 21.3f, "metaprogramming" };
     Y y { 2022, 12.05, '*', { 18.47f, "stateful" } };
 
+    // get name of a field by its address
+
+    static_assert(smp::member_stem<&W::key>() == "key");
+    static_assert(smp::member_stem<&W::val>() == "val");
+
     // get a field by index or type
 
     smp::get<0>(x) = 72.9f;
@@ -148,6 +153,11 @@ int main(int argc, char* argv[])
 
     static_assert(std::is_same_v<smp::tuple_element_t<1, X>, std::string>);
     static_assert(std::is_same_v<smp::tuple_element_t<2, Y>, char>);
+
+    // extract the index of a member type
+
+    static_assert(smp::member_index_v<float, X> == 0);
+    static_assert(smp::member_index_v<double, Y> == 1);
 
     // extract the member types
 
