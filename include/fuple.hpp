@@ -127,6 +127,32 @@ namespace smp
             return *this;
         }
 
+        template <typename... Brgs>
+        constexpr decltype(auto) swap(fuple<Brgs...>& f)
+        {
+            constexpr size_t l = fuple<Args...>::size();
+            constexpr size_t r = fuple<Brgs...>::size();
+
+            [&]<size_t... N>(std::index_sequence<N...>)
+            {
+                (..., std::swap(select<N>(*this), select<N>(f)));
+            }
+            (std::make_index_sequence<l < r ? l : r>());
+        }
+
+        template <typename... Brgs>
+        constexpr decltype(auto) swap(const fuple<Brgs...>& f) const
+        {
+            constexpr size_t l = fuple<Args...>::size();
+            constexpr size_t r = fuple<Brgs...>::size();
+
+            [&]<size_t... N>(std::index_sequence<N...>)
+            {
+                (..., std::swap(select<N>(*this), select<N>(f)));
+            }
+            (std::make_index_sequence<l < r ? l : r>());
+        }
+
         constexpr fuple& operator=(fuple<Args...>&& r)
         {
             return assign(std::move(r));
@@ -260,19 +286,6 @@ namespace smp
 
     template <size_t N, typename T>
     using fuple_element_t = outer_t<fuple_element<N, T>>;
-
-    template <typename... Args, typename... Brgs>
-    constexpr decltype(auto) swap(fuple<Args...>& p, fuple<Brgs...>& q)
-    {
-        constexpr size_t l = fuple<Args...>::size();
-        constexpr size_t r = fuple<Brgs...>::size();
-
-        [&]<size_t... N>(std::index_sequence<N...>)
-        {
-            (..., std::swap(select<N>(p), select<N>(q)));
-        }
-        (std::make_index_sequence<l < r ? l : r>());
-    }
 
     template <typename... Args>
     constexpr decltype(auto) tie(Args&... args)

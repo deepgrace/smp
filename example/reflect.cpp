@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
     X x { 21.3f, "metaprogramming" };
     Y y { 2022, 12.05, '*', { 18.47f, "stateful" } };
 
-    // get name of a field by its address
+    // get the name of a field by its address
 
     static_assert(smp::member_stem<&W::key>() == "key");
     static_assert(smp::member_stem<&W::val>() == "val");
