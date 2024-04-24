@@ -96,20 +96,26 @@ namespace smp
     template <typename T>
     using object_t = typename object<T>::type;
 
-    template <typename T>
+    template <typename T, template <typename ...> typename pack = fuple>
     struct members
     {
         using U = std::remove_cvref_t<T>;
 
         using type = decltype([]<size_t... N>(std::index_sequence<N...>)
         {
-            return fuple<type_t<N, U>...>();
+            return pack<type_t<N, U>...>();
         }
         (std::make_index_sequence<arity_v<U>>()));
     };
 
+    template <typename T, template <typename ...> typename pack = fuple>
+    using members_t = typename members<T, pack>::type;
+
     template <typename T>
-    using members_t = typename members<T>::type;
+    using to_fuple_t = members_t<T>;
+
+    template <typename T>
+    using to_tuple_t = members_t<T, std::tuple>;
 
     template <auto f>
     consteval decltype(auto) member_stem()
