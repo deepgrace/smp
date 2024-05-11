@@ -20,7 +20,7 @@
  *   time a set of code changes is merged to the master branch.
  */
 
-#define SMP_VERSION_NUMBER 15
+#define SMP_VERSION_NUMBER 16
 #define SMP_VERSION_STRING "smp/" SMP_STRINGIZE(SMP_VERSION_NUMBER)
 
 #endif

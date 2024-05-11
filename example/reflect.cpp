@@ -167,6 +167,12 @@ int main(int argc, char* argv[])
     static_assert(std::is_same_v<smp::members_t<X>, smp::fuple<float, std::string>>);
     static_assert(std::is_same_v<smp::members_t<X, std::tuple>, std::tuple<float, std::string>>);
 
+    // search index of the first equal
+    using namespace std::literals;
+
+    static_assert(smp::search_index(1, 0, 1, 2, 3) == 1);
+    static_assert(smp::search_index("key"sv, "seq"sv, "value"sv, "id"sv) == 3);
+
     // extract the nth member pointer type
 
     static_assert(std::is_same_v<smp::member_pointer_t<1, X>, std::string X::*>);
@@ -176,6 +182,11 @@ int main(int argc, char* argv[])
 
     static_assert(std::is_same_v<smp::member_pointers_t<X>, smp::fuple<float X::*, std::string X::*>>);
     static_assert(std::is_same_v<smp::member_pointers_t<Y>, smp::fuple<int Y::*, double Y::*, char Y::*, X Y::*>>);
+
+    // get the offset of a field by index
+
+    assert((smp::offset_of<1, Y>() == 8));
+    assert((smp::offset_of<2, Y>() == 16));
 
     // turn to smp::fuple or std::tuple by value
 

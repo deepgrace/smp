@@ -132,6 +132,15 @@ namespace smp
         return s;
     }
 
+    template <typename S, typename T, typename... Args>
+    constexpr size_t search_index(S&& s, T&& t, Args&&... args)
+    {
+        if constexpr(sizeof...(Args) == 0)
+            return s != t;
+        else
+            return s == t ? 0 : search_index(std::forward<S>(s), std::forward<Args>(args)...) + 1;
+    }
+
     template <typename T, typename U>
     consteval decltype(auto) member_index()
     {
@@ -155,6 +164,12 @@ namespace smp
 
     template <typename T>
     using member_pointers_t = typename member_pointers<T>::type;
+
+    template <size_t N, typename T>
+    constexpr decltype(auto) offset_of() noexcept
+    {
+        return visitor<members_t<std::remove_cvref_t<T>>>().template offset<N>();
+    }
 
     template <bool f, bool t, typename U>
     requires (!is_fuple_v<std::remove_cvref_t<U>> && !is_tuple_v<std::remove_cvref_t<U>>)
