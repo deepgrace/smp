@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
     smp::apply(print_backward, f13);
     std::cout << std::endl;
 
-    // apply a function to every nth field of std::fuples, takes the longest common fields number
+    // apply a function to every nth field of smp::fuples, takes the longest common fields number
 
     smp::zip(print_backward, f12, f11, f13);
     std::cout << std::endl;
